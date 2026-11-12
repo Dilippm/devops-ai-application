@@ -1,0 +1,192 @@
+# Boutique: full local stack.
+#
+#   docker compose up -d --build      # build and start everything
+#   docker compose ps                 # check status / health
+#   docker compose logs -f gateway    # follow one service's logs
+#   docker compose down               # stop (keeps the database volume)
+#   docker compose down -v            # stop and wipe the database
+#
+# Secrets come from an optional .env file next to this one (see .env.example).
+# The defaults below are for local development only.
+
+name: boutique
+
+x-backend: &backend
+  restart: unless-stopped
+  networks: [boutique]
+  depends_on:
+    postgres:
+      condition: service_healthy
+
+x-secrets: &secrets
+  JWT_SECRET: ${JWT_SECRET:-local-dev-jwt-secret-change-me}
+  INTERNAL_API_TOKEN: ${INTERNAL_API_TOKEN:-local-dev-internal-token-change-me}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: boutique
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-boutique}
+      POSTGRES_DB: postgres
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      # TCP (-h 127.0.0.1) only answers once the init scripts have finished;
+      # during init PostgreSQL listens on its Unix socket only.
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -U boutique -d postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    networks: [boutique]
+
+  auth:
+    <<: *backend
+    build: ./auth
+    image: boutique/auth:local
+    environment:
+      <<: *secrets
+      DATABASE_URL: postgres://boutique:${POSTGRES_PASSWORD:-boutique}@postgres:5432/auth_db
+    ports:
+      - "3002:3002"
+    healthcheck: &healthcheck
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3002/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 10s
+
+  product-service:
+    <<: *backend
+    build: ./product-service
+    image: boutique/product-service:local
+    environment:
+      <<: *secrets
+      DATABASE_URL: postgres://boutique:${POSTGRES_PASSWORD:-boutique}@postgres:5432/products_db
+    ports:
+      - "3003:3003"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3003/health"]
+
+  order-service:
+    <<: *backend
+    build: ./order-service
+    image: boutique/order-service:local
+    environment:
+      <<: *secrets
+      DATABASE_URL: postgres://boutique:${POSTGRES_PASSWORD:-boutique}@postgres:5432/orders_db
+      PRODUCT_SERVICE_URL: http://product-service:3003
+      ORDERS_URL: http://orders:3005
+    ports:
+      - "3004:3004"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3004/health"]
+
+  orders:
+    <<: *backend
+    build: ./orders
+    image: boutique/orders:local
+    environment:
+      <<: *secrets
+      DATABASE_URL: postgres://boutique:${POSTGRES_PASSWORD:-boutique}@postgres:5432/orders_db
+      PRODUCT_SERVICE_URL: http://product-service:3003
+    ports:
+      - "3005:3005"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3005/health"]
+
+  user-service:
+    <<: *backend
+    build: ./user-service
+    image: boutique/user-service:local
+    environment:
+      <<: *secrets
+      DATABASE_URL: postgres://boutique:${POSTGRES_PASSWORD:-boutique}@postgres:5432/users_db
+    ports:
+      - "3006:3006"
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3006/health"]
+
+  gateway:
+    build: ./gateway
+    image: boutique/gateway:local
+    restart: unless-stopped
+    environment:
+      AUTH_URL: http://auth:3002
+      PRODUCT_SERVICE_URL: http://product-service:3003
+      ORDER_SERVICE_URL: http://order-service:3004
+      ORDERS_URL: http://orders:3005
+      USER_SERVICE_URL: http://user-service:3006
+    ports:
+      - "3001:3001"
+    depends_on:
+      - auth
+      - product-service
+      - order-service
+      - orders
+      - user-service
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3001/health"]
+    networks: [boutique]
+
+  frontend:
+    build: ./frontend
+    image: boutique/frontend:local
+    restart: unless-stopped
+    environment:
+      GATEWAY_URL: http://gateway:3001
+    ports:
+      - "3000:3000"
+    depends_on:
+      - gateway
+    healthcheck:
+      <<: *healthcheck
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/"]
+    networks: [boutique]
+
+  prometheus:
+    image: prom/prometheus:v3.4.0
+    restart: unless-stopped
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    networks: [boutique]
+
+  grafana:
+    image: grafana/grafana:11.6.0
+    restart: unless-stopped
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH: /var/lib/grafana/dashboards/boutique-dashboard.json
+    ports:
+      - "3007:3000"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+    networks: [boutique]
+
+networks:
+  boutique:
+
+volumes:
+  postgres-data:
+  prometheus-data:
+  grafana-data:

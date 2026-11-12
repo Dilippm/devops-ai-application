@@ -35,3 +35,8 @@ Thumbs.db
 # Environment variables
 .env
 .mcp.json
+
+# Node.js
+node_modules/
+dist/
+npm-debug.log*

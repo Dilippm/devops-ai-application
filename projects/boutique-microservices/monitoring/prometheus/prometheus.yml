@@ -1,0 +1,29 @@
+# Local (Docker Compose) scrape config. On EKS the same targets are discovered
+# through ServiceMonitor resources instead, and the job label is the
+# Kubernetes Service name, so dashboards and queries work in both places.
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: gateway
+    static_configs:
+      - targets: ['gateway:3001']
+  - job_name: auth
+    static_configs:
+      - targets: ['auth:3002']
+  - job_name: product-service
+    static_configs:
+      - targets: ['product-service:3003']
+  - job_name: order-service
+    static_configs:
+      - targets: ['order-service:3004']
+  - job_name: orders
+    static_configs:
+      - targets: ['orders:3005']
+  - job_name: user-service
+    static_configs:
+      - targets: ['user-service:3006']
+  - job_name: prometheus
+    static_configs:
+      - targets: ['localhost:9090']

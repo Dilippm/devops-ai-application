@@ -1,0 +1,17 @@
+{
+  "name": "boutique-microservices",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Boutique e-commerce app: React frontend, Node.js microservices, PostgreSQL",
+  "scripts": {
+    "postinstall": "node scripts/install-all.js",
+    "dev": "concurrently -k -n backend,frontend -c blue,magenta \"npm:dev:backend\" \"npm:dev:frontend\"",
+    "dev:backend": "concurrently -k -n gateway,auth,products,order-svc,orders,users -c auto \"npm --prefix gateway run dev\" \"npm --prefix auth run dev\" \"npm --prefix product-service run dev\" \"npm --prefix order-service run dev\" \"npm --prefix orders run dev\" \"npm --prefix user-service run dev\"",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "db:up": "docker compose up -d postgres",
+    "dashboard": "node scripts/generate-dashboard.js"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.7"
+  }
+}
