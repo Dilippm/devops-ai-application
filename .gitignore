@@ -19,22 +19,45 @@ ENV/
 Thumbs.db
 
 # Terraform
+# State files (contain resource IDs and can contain secrets)
 *.tfstate
 *.tfstate.*
+# Downloaded providers and modules (recreated by terraform init)
 .terraform/
+# Saved plan files (may contain secrets, only valid once)
+tfplan
+*.tfplan
+# Crash logs
+crash.log
+crash.*.log
+# Local override files (personal, not shared)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+# CLI config (can contain API tokens)
+.terraformrc
+terraform.rc
+# NOTE: .terraform.lock.hcl is intentionally NOT ignored - commit it
 
 # Kubernetes
 *.kubeconfig
 
 # Docker
-.dockerignore
+
 
 # Logs
 *.log
 
 # Environment variables
 .env
+.env.*
+!.env.example
 .mcp.json
+
+# Secrets / keys
+*.pem
+*.key
 
 # Node.js
 node_modules/
