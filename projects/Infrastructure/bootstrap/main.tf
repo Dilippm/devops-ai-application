@@ -6,7 +6,7 @@ data "aws_caller_identity" "current" {}
 
 # This resource creates an S3 bucket to store the Terraform state for the project.
 resource "aws_s3_bucket" "bootstrap_bucket" {
-  bucket = "${var.bucket_prefix}-${data.aws_caller_identity.current.account_id}"
+  bucket        = "${var.bucket_prefix}-${data.aws_caller_identity.current.account_id}"
   force_destroy = true
 
 }

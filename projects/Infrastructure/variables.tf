@@ -28,39 +28,39 @@ variable "cluster_name" {
   type        = string
 }
 
-# variable "node_group_name" {
-#   type        = string
-#   description = "EKS node group name"
-# }
+variable "node_group_name" {
+  type        = string
+  description = "EKS node group name"
+}
 
-# variable "instance_types" {
-#   type        = list(string)
-#   description = "Instance types for worker nodes (t3.medium, t3.large)"
-# }
+variable "instance_types" {
+  type        = list(string)
+  description = "Instance types for worker nodes (t3.medium, t3.large)"
+}
 
-# variable "capacity_type" {
-#   type        = string
-#   description = "ON_DEMAND or SPOT"
-# }
+variable "capacity_type" {
+  type        = string
+  description = "ON_DEMAND or SPOT"
+}
 
-# variable "desired_size" {
-#   type        = number
-#   description = "Desired number of worker nodes"
-# }
+variable "desired_size" {
+  type        = number
+  description = "Desired number of worker nodes"
+}
 
-# variable "min_size" {
-#   type        = number
-#   description = "Minimum number of  worker nodes"
-# }
+variable "min_size" {
+  type        = number
+  description = "Minimum number of  worker nodes"
+}
 
-# variable "max_size" {
-#   type        = number
-#   description = "Maximum number of worker nodes"
-# }
+variable "max_size" {
+  type        = number
+  description = "Maximum number of worker nodes"
+}
 
-# variable "disk_size" {
-#   type        = number
-# }
+variable "disk_size" {
+  type = number
+}
 
 variable "repositories" {
   type = list(string)
