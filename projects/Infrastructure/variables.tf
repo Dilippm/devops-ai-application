@@ -62,6 +62,6 @@ variable "cluster_name" {
 #   type        = number
 # }
 
-# variable "repositories" {
-#   type = list(string)
-# }
+variable "repositories" {
+  type = list(string)
+}

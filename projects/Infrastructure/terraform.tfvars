@@ -22,3 +22,13 @@ subnets = [
 ]
 
 cluster_name = "eks-cluster"
+
+repositories = [
+  "frontend",
+  "gateway",
+  "auth",
+  "order-service",
+  "orders",
+  "product-service",
+  "user-service"
+]
