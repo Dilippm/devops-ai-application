@@ -33,10 +33,6 @@ module "ecr" {
   repositories = var.repositories
 }
 
-# The data "aws_eks_cluster_auth" resource retrieves the authentication token for the EKS cluster, which is used to authenticate with the Kubernetes API server.
-data "aws_eks_cluster_auth" "eks" {
-  name = module.eks.cluster_name
-}
 
 ## Kubernetes and Helm Providers
 # The kubernetes provider is configured to connect to the EKS cluster using the cluster endpoint, certificate authority data, and authentication token. 
@@ -45,7 +41,11 @@ provider "kubernetes" {
   alias                  = "eks"
   host                   = module.eks.cluster_endpoint
   cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-  token                  = data.aws_eks_cluster_auth.eks.token
+  exec {
+    api_version = "client.authentication.k8s.io/v1beta1"
+    command     = "aws"
+    args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
+  }
 }
 
 # The helm provider is configured to connect to the EKS cluster using the same connection details as the kubernetes provider.
@@ -55,6 +55,22 @@ provider "helm" {
   kubernetes = {
     host                   = module.eks.cluster_endpoint
     cluster_ca_certificate = base64decode(module.eks.cluster_certificate_authority_data)
-    token                  = data.aws_eks_cluster_auth.eks.token
+    exec = {
+      api_version = "client.authentication.k8s.io/v1beta1"
+      command     = "aws"
+      args        = ["eks", "get-token", "--cluster-name", module.eks.cluster_name]
+    }
+
   }
+}
+
+module "argocd" {
+  source = "./modules/argocd"
+
+  providers = {
+    kubernetes = kubernetes.eks
+    helm       = helm.eks
+  }
+
+  depends_on = [module.eks]
 }
