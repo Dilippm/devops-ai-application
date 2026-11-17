@@ -32,6 +32,8 @@ crash.log
 crash.*.log
 # Local override files (personal, not shared)
 override.tf
+tf.tf
+boot.tf
 override.tf.json
 *_override.tf
 *_override.tf.json
@@ -63,3 +65,5 @@ terraform.rc
 node_modules/
 dist/
 npm-debug.log*
+
+secrets.yml
