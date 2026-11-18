@@ -28,7 +28,7 @@ spec:
                 secretKeyRef:
                   name: boutique-secrets
                   key: ORDERS_DB_URL
-            - name: PRODUCTS_SERVICE_URL
+            - name: PRODUCT_SERVICE_URL
               value: "http://product-service:3003"
 
 ---
