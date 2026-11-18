@@ -7,7 +7,7 @@ spec:
   project: default
   source:
     repoURL: 'https://github.com/Dilippm/devops-ai-application.git'
-    targetRevision: main
+    targetRevision: dev/v1.1/argocd
     path: gitops
   destination:
     server: 'https://kubernetes.default.svc'
