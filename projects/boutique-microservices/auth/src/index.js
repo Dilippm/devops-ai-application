@@ -9,6 +9,7 @@ const { createService, HttpError } = require('./lib/platform');
 const { createDb } = require('./lib/db');
 const { loadSecret, requireAuth } = require('./lib/auth');
 
+
 const PORT = Number(process.env.PORT || 3002);
 const DATABASE_URL = process.env.DATABASE_URL || 'postgres://boutique:boutique@localhost/auth_db';
 const TOKEN_TTL = process.env.JWT_EXPIRES_IN || '12h';
