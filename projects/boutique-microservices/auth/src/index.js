@@ -3,6 +3,7 @@
 // Auth service: registration, login and token issuing. Owns auth_db.
 
 const bcrypt = require('bcryptjs');
+
 const jwt = require('jsonwebtoken');
 const { createService, HttpError } = require('./lib/platform');
 const { createDb } = require('./lib/db');
